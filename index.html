@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <h2>รายชื่อนักเรียนทั้งหมด (ข้อมูลจาก MySQL)</h2>
+    <div id="display"></div>
+
+    <script>
+      async function pross() {
+        try {
+          const response = await fetch("/api/test");
+          const student = await response.json();
+          let html = `
+            <table border="1">
+                <tr style="background-color: #eee;">
+                    <th>รูปถ่าย</th>
+                    <th>ID</th>
+                    <th>ชื่อ</th>
+                    <th>นามสกุล</th>
+                    <th>อายุ</th>
+                    <th>ชั้น</th>
+                </tr>
+            `;
+          student.forEach((s) => {
+            // console.log(s.image_url);
+            console.log(s);
+            
+            
+            html += `
+                <tr>
+                    <td><img src="${s.image_url}" width="100" height="100"></td>
+                    <td>${s.id}</td>
+                    <td>${s.firstname}</td>
+                    <td>${s.lastname}</td>
+                    <td>${s.age}</td>
+                    <td>${s.year_}</td>
+                </tr>
+                `;
+          });
+          html += `</table>`;
+          document.getElementById("display").innerHTML = html;
+        } catch (error) {
+          console.error("Error : ", error);
+          document.getElementById("display").innerHTML =
+            "เกิดข้อผิดพลาดในการโหลดข้อมูล";
+        }
+      }
+      pross();
+    </script>
+  </body>
+</html>
