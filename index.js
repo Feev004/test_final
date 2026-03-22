@@ -21,6 +21,19 @@ app.get("/api/test_", async (req, res) => {
   }
 });
 
+app.get("/api/test_class", async (req, res) => {
+  try {
+    const sql =
+      `SELECT * FROM class;`
+    const [products] = await pool.query(sql);
+    // console.log("test",products);
+    
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.delete("/api/test_/:id", async (req, res) => {
   const studentId = req.params.id;
   try {
@@ -32,6 +45,36 @@ app.delete("/api/test_/:id", async (req, res) => {
   }
 });
 
+//images
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "images/");
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const ext = file.originalname.substring(file.originalname.lastIndexOf("."));
+    cb(null, `student-${uniqueSuffix}${ext}`);
+  },
+});
+const upload = multer({ storage });
+
+app.post("/api/test_", upload.single("image"), async (req, res) => {
+  try {
+    const { firstname, lastname, age, class_id } = req.body;
+    let image_url = null;
+
+    if (req.file && req.file.filename) {
+      image_url = `/images/${req.file.filename}`;
+    }
+
+    const sql = `INSERT INTO student (firstname, lastname, age, class_id, image_url) VALUES (?, ?, ?, ?, ?)`;
+    await pool.query(sql, [firstname, lastname, age, class_id, image_url]);
+    res.json({ message: "บันทึกข้อมูลสำเร็จ" });
+  } catch (err) {
+    console.error("Insert error", err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 function render(request, response) {
   let url = request.url;

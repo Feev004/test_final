@@ -7,10 +7,34 @@
   </head>
   <body>
     <h2>รายชื่อนักเรียนทั้งหมด (ข้อมูลจาก MySQL)</h2>
-    
+    <form enctype="multipart/form-data" id="fileInput" onsubmit="return false;">
+      <input type="text" id="firstname" placeholder="ชื่อ" required />
+      <input type="text" id="lastname" placeholder="นามสกุล" required />
+      <input type="number" id="age" placeholder="อายุ" required />
+      <!-- <input type="number" id="category_id" placeholder="ID ประเภทสินค้า" required /> -->
+      <select id="categorySelect"></select>
+      <br />
+      <input type="file" id="image" />
+      <button type="button" onclick="saveStudent()">เพิ่มนักเรียน</button>
+    </form>
     <div id="display"></div>
 
     <script>
+      async function show_class() {
+        try {
+          const response = await fetch("/api/test_class");
+          const classes = await response.json();
+          const select = document.getElementById("categorySelect");
+          classes.forEach((c) => {
+            const option = document.createElement("option");
+            option.value = c.id;
+            option.textContent = c.name;
+            select.appendChild(option);
+          });
+        } catch (error) {
+          console.error("Error : ", error);
+        }
+      }
       async function pross() {
         try {
           const response = await fetch("/api/test_");
@@ -53,6 +77,48 @@
         }
       }
 
+      async function saveStudent() {
+        const firstname = document.getElementById("firstname").value;
+        const lastname = document.getElementById("lastname").value;
+        const age = document.getElementById("age").value;
+        const class_id = document.getElementById("categorySelect").value;
+        const formData = new FormData();
+        formData.append("firstname", firstname);
+        formData.append("lastname", lastname);
+        formData.append("age", age);
+        formData.append("class_id", class_id);
+        let input_file = document.getElementById("image")
+        if (input_file){
+          formData.append("image", input_file.files[0]);
+        }
+        console.log(firstname, lastname, age, class_id, input_file.files[0]);
+
+        try {
+          const response = await fetch("/api/test_", {
+            method: "POST",
+            body: formData,
+          });
+          const result = await response.json();
+          alert(result.message);
+          pross();
+        } catch (error) {
+          alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล");
+          console.error("Error : ", error);
+        }
+      }
+      // function previewImage(event) {
+      //   const reader = new FileReader();
+      //   const file = event.target.files[0];
+
+      //   if (file) {
+      //     reader.onload = function () {
+      //       const output = document.getElementById("current_image");
+      //       output.src = reader.result;
+      //     };
+      //     reader.readAsDataURL(file);
+      //   }
+      // }
+
       async function deleteStudent(id) {
         if (confirm("คุณแน่ใจว่าต้องการลบสินค้านี้?")) {
           try {
@@ -62,6 +128,7 @@
             const result = await response.json();
             alert(result.message);
             pross();
+            // show_class();
           } catch (error) {
             alert("เกิดข้อผิดพลาดในการลบข้อมูล");
             console.error("Error : ", error);
@@ -69,6 +136,7 @@
         }
       }
       pross();
+      show_class();
     </script>
   </body>
 </html>
