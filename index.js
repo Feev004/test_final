@@ -8,7 +8,7 @@ app.use(express.json());
 app.use(express.static("public"));
 app.use("/images", express.static("images")); 
 
-app.get("/api/test", async (req, res) => {
+app.get("/api/test_", async (req, res) => {
   try {
     const sql =
       `SELECT student.image_url, student.id, student.firstname, student.lastname , student.age, class.name as year_ FROM student JOIN class ON student.class_id = class.id;`
@@ -20,6 +20,18 @@ app.get("/api/test", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+app.delete("/api/test_/:id", async (req, res) => {
+  const studentId = req.params.id;
+  try {
+    const sql = `DELETE FROM student WHERE id = ?`;
+    await pool.query(sql, [studentId]);
+    res.json({ message: "Student deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 function render(request, response) {
   let url = request.url;

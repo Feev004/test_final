@@ -7,12 +7,13 @@
   </head>
   <body>
     <h2>รายชื่อนักเรียนทั้งหมด (ข้อมูลจาก MySQL)</h2>
+    
     <div id="display"></div>
 
     <script>
       async function pross() {
         try {
-          const response = await fetch("/api/test");
+          const response = await fetch("/api/test_");
           const student = await response.json();
           let html = `
             <table border="1">
@@ -23,13 +24,13 @@
                     <th>นามสกุล</th>
                     <th>อายุ</th>
                     <th>ชั้น</th>
+                    <th>จัดการ</th>
+                    <th>ลบข้อมูล</th>
                 </tr>
             `;
           student.forEach((s) => {
-            // console.log(s.image_url);
-            console.log(s);
-            
-            
+            console.log(s.image_url);
+
             html += `
                 <tr>
                     <td><img src="${s.image_url}" width="100" height="100"></td>
@@ -38,6 +39,8 @@
                     <td>${s.lastname}</td>
                     <td>${s.age}</td>
                     <td>${s.year_}</td>
+                    <td><button onclick="editStudent(${s.id})">แก้ไข</button></td>
+                    <td><button onclick="deleteStudent(${s.id})">ลบ</button></td>
                 </tr>
                 `;
           });
@@ -47,6 +50,22 @@
           console.error("Error : ", error);
           document.getElementById("display").innerHTML =
             "เกิดข้อผิดพลาดในการโหลดข้อมูล";
+        }
+      }
+
+      async function deleteStudent(id) {
+        if (confirm("คุณแน่ใจว่าต้องการลบสินค้านี้?")) {
+          try {
+            const response = await fetch(`/api/test_/${id}`, {
+              method: "DELETE",
+            });
+            const result = await response.json();
+            alert(result.message);
+            pross();
+          } catch (error) {
+            alert("เกิดข้อผิดพลาดในการลบข้อมูล");
+            console.error("Error : ", error);
+          }
         }
       }
       pross();
