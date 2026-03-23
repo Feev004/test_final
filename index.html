@@ -4,6 +4,39 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
+    <style>
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.4);
+      }
+      .modal-content {
+        background-color: #fefefe;
+        margin: 5% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        max-width: 500px;
+      }
+      .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+      }
+      .close:hover,
+      .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+      }
+    </style>
   </head>
   <body>
     <h2>รายชื่อนักเรียนทั้งหมด (ข้อมูลจาก MySQL)</h2>
@@ -18,6 +51,40 @@
       <button type="button" onclick="saveStudent()">เพิ่มนักเรียน</button>
     </form>
     <div id="display"></div>
+
+    <div id="productModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h3>แก้ไขข้อมูลนักเรียน</h3>
+        <input type="hidden" id="edit_id" />
+        <p>
+          ชื่อ:
+          <input type="text" id="edit_firstname" placeholder="ชื่อ" />
+        </p>
+        <p>นามสกุล: <input type="text" id="edit_lastname" placeholder="นามสกุล" /></p>
+        <p>อายุ: <input type="number" id="edit_age" placeholder="อายุ" /></p>
+        <p>
+          ชั้น:
+          <select id="edit_category"></select>
+        </p>
+        <p>
+          รูปภาพปัจจุบัน: <br />
+          <img id="current_image" src="" width="100px" />
+        </p>
+        <p>
+          เลือกรูปใหม่:
+          <input
+            type="file"
+            id="edit_image"
+            accept="image/*"
+            onchange="previewImage(event)"
+          />
+        </p>
+        <hr />
+        <button onclick="saveData()">บันทึกการแก้ไข</button>
+        <button onclick="closeModal()">ปิดหน้าต่าง</button>
+      </div>
+    </div>
 
     <script>
       async function show_class() {
@@ -63,7 +130,7 @@
                     <td>${s.lastname}</td>
                     <td>${s.age}</td>
                     <td>${s.year_}</td>
-                    <td><button onclick="editStudent(${s.id})">แก้ไข</button></td>
+                    <td><button onclick="openModal(${s.id})">แก้ไข</button></td>
                     <td><button onclick="deleteStudent(${s.id})">ลบ</button></td>
                 </tr>
                 `;
@@ -87,8 +154,8 @@
         formData.append("lastname", lastname);
         formData.append("age", age);
         formData.append("class_id", class_id);
-        let input_file = document.getElementById("image")
-        if (input_file){
+        let input_file = document.getElementById("image");
+        if (input_file) {
           formData.append("image", input_file.files[0]);
         }
         console.log(firstname, lastname, age, class_id, input_file.files[0]);
@@ -106,21 +173,9 @@
           console.error("Error : ", error);
         }
       }
-      // function previewImage(event) {
-      //   const reader = new FileReader();
-      //   const file = event.target.files[0];
-
-      //   if (file) {
-      //     reader.onload = function () {
-      //       const output = document.getElementById("current_image");
-      //       output.src = reader.result;
-      //     };
-      //     reader.readAsDataURL(file);
-      //   }
-      // }
 
       async function deleteStudent(id) {
-        if (confirm("คุณแน่ใจว่าต้องการลบสินค้านี้?")) {
+        if (confirm("คุณแน่ใจว่าต้องการลบนักเรียนนี้?")) {
           try {
             const response = await fetch(`/api/test_/${id}`, {
               method: "DELETE",
@@ -135,6 +190,108 @@
           }
         }
       }
+
+      // function previewImage(event) {
+      //   const reader = new FileReader();
+      //   const file = event.target.files[0];
+
+      //   if (file) {
+      //     reader.onload = function () {
+      //       document.getElementById("current_image").src = reader.result;
+      //     };
+      //     reader.readAsDataURL(file);
+      //   }
+      // }
+
+      async function openModal(id) {
+        console.log("คลิกแล้ว ID คือ:", id);
+        document.getElementById("productModal").style.display = "block";
+
+        // โหลด classes สำหรับ edit_category
+        try {
+          const classRes = await fetch("/api/test_class");
+          const classes = await classRes.json();
+          const editSelect = document.getElementById("edit_category");
+          editSelect.innerHTML = ""; // เคลียร์ options เดิม
+          classes.forEach((c) => {
+            const option = document.createElement("option");
+            option.value = c.id;
+            option.textContent = c.name;
+            editSelect.appendChild(option);
+          });
+        } catch (error) {
+          console.error("Error loading classes:", error);
+        }
+
+        try {
+          const res = await fetch(`/api/test_/${id}`);
+          if (!res.ok) throw new Error("ดึงข้อมูลจาก Server ไม่ได้");
+
+          const p = await res.json();
+          document.getElementById("edit_id").value = p.id;
+          document.getElementById("edit_firstname").value = p.firstname;
+          document.getElementById("edit_lastname").value = p.lastname;
+          document.getElementById("edit_age").value = p.age;
+          document.getElementById("edit_category").value = p.class_id;
+          document.getElementById("current_image").src = p.image_url;
+        } catch (err) {
+          console.error("เกิดข้อผิดพลาด:", err);
+        }
+      }
+
+      async function saveData() {
+        const id = document.getElementById("edit_id").value;
+        const formData = new FormData();
+
+        formData.append("firstname", document.getElementById("edit_firstname").value);
+        formData.append("lastname", document.getElementById("edit_lastname").value);
+        formData.append("age", document.getElementById("edit_age").value);
+        formData.append(
+          "class_id",
+          document.getElementById("edit_category").value,
+        );
+
+        const fileInput = document.getElementById("edit_image");
+        if (fileInput.files[0]) {
+          formData.append("image", fileInput.files[0]);
+        }
+
+        try {
+          const res = await fetch(`/api/test_/${id}`, {
+            method: "PUT",
+            body: formData,
+          });
+          if (res.ok) {
+            alert("บันทึกข้อมูลสำเร็จ!");
+            closeModal();
+            pross();
+          }
+        } catch (err) {
+          console.error("Error:", err);
+        }
+      }
+
+      function closeModal() {
+        document.getElementById("productModal").style.display = "none";
+      }
+
+      function previewImage(event) {
+        const reader = new FileReader();
+        const file = event.target.files[0];
+
+        if (file) {
+          reader.onload = function () {
+            document.getElementById("current_image").src = reader.result;
+          };
+          reader.readAsDataURL(file);
+        }
+      }
+
+      // async function init() {
+      //   await loadCategories();
+      //   await loadProducts();
+      // }
+
       pross();
       show_class();
     </script>
